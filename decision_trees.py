@@ -22,7 +22,6 @@ class DecisionTree:
         self.root = None
 
     def fit(self, X, y):
-        self.d_features = X.shape[1]
         self.root = self.form_tree(X, y, 0)
 
     def form_tree(self, X, y, depth):
