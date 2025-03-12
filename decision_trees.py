@@ -16,7 +16,7 @@ class Node:
 
 
 class DecisionTree:
-    def __init__(self, min_samples_split=5, max_depth=10):
+    def __init__(self, min_samples_split=10, max_depth=5):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.root = None
@@ -25,7 +25,7 @@ class DecisionTree:
         self.root = self.form_tree(X, y, 0)
 
     def form_tree(self, X, y, depth):
-        n_samples = X.shape[0]
+        n_samples = X.shape[0]  
         n_labels = len(np.unique(y))
 
         
@@ -33,17 +33,15 @@ class DecisionTree:
         if depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split:
             return Node(value=self.calculate_leaf_value(y))
         
-        # best split
+        # best split determination
         best_feature, best_threshold = self.best_split(X, y)
-        # true or false returned
-        # left_indices = X[:, best_feature] < best_threshold
         left_indices, right_indices = self._split(X[:, best_feature], best_threshold)
         
-
+        # spiting the data based on indices 
         X_left, y_left = X[left_indices, :], y[left_indices]
         X_right, y_right = X[right_indices, :], y[right_indices]
 
-        # recursive call --> better use split function
+        # recursive call on each child
         left = self.form_tree(X_left, y_left, depth + 1)
         right = self.form_tree(X_right, y_right, depth + 1)
 
@@ -51,37 +49,27 @@ class DecisionTree:
 
 
 
-
-    def predict(self, X):
-        return np.array([self.traverse_tree(x, self.root) for x in X])
-
-
-    def traverse_tree(self, x, node):
-        if(node.is_leaf()):
-            return node.value
-        if(x[node.feature] < node.threshold):
-            return self.traverse_tree(x, node.left)
-        return self.traverse_tree(x, node.right)
-        
+     
     def calculate_leaf_value(self, y):
         counter = Counter(y)
-        # returns the most common "1" elements in the list, as a dictionary
-        most_common = counter.most_common(1)[0][0]
-        return most_common # return the key value which is our label
+        most_common = counter.most_common(1)[0][0]  
+        return most_common 
     
     def best_split(self, X, y):
         max_gain = -1
         feature_idx, best_threshold = None, None
 
+        # basically we are exploring all possible splits (which are any feature and its possible thresholds)
+        # by maximizing the information gain
         for idx in range(X.shape[1]):
-            feature = X[:, idx]
-            thresholds = np.unique(feature)
+            feature_col = X[:, idx]
+            thresholds = np.unique(feature_col)
 
             if len(thresholds) != 1:
                 thresholds = (thresholds[1:] + thresholds[:-1]) / 2
             
             for threshold in thresholds:
-                gain = self.IG_calculation(y, feature, threshold)
+                gain = self.IG_calculation(y, feature_col, threshold)
                 if gain > max_gain:
                     max_gain = gain
                     feature_idx = idx
@@ -114,6 +102,18 @@ class DecisionTree:
         p = histogram / len(y)
         return -np.sum([p_i * np.log2(p_i) for p_i in p if p_i > 0])
     
+
+    def predict(self, X):
+        return np.array([self.traverse_tree(x, self.root) for x in X])
+
+
+    def traverse_tree(self, x, node):
+        if(node.is_leaf()):
+            return node.value
+        if(x[node.feature] < node.threshold):
+            return self.traverse_tree(x, node.left)
+        return self.traverse_tree(x, node.right)
+
 
     def accuracy(self, y_true, y_pred):
         return np.sum(y_true == y_pred) / len(y_true)
