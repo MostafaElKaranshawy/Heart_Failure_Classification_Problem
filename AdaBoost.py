@@ -10,10 +10,10 @@ class DecisionStump:
         self.is_positive_class_less_than_or_equal = True
 
     def predict(self, x):
-        if self.is_positive_class_less_than_or_equal:
+        if self.is_positive_class_less_than_or_equal: # if the positive class is less than or equal
             return np.where(x[:, self.feature_col] <= self.threshold, 1, -1)
 
-        return np.where(x[:, self.feature_col] > self.threshold, 1, -1)
+        return np.where(x[:, self.feature_col] > self.threshold, 1, -1) # if the positive class is greater than
     
 
 class AdaBoost:
@@ -24,7 +24,7 @@ class AdaBoost:
     def fit(self, x_train, y_train):
         n_samples, n_features = x_train.shape
         weights = np.ones(n_samples) / n_samples
-        new_y_train = np.where(y_train == 0, -1, 1)
+        new_y_train = np.where(y_train == 0, -1, 1) # convert 0 to -1 for adaboost logic
 
         for _ in range(self.num_iterations):
             stump = DecisionStump()
@@ -42,7 +42,7 @@ class AdaBoost:
                 for threshold in thresholds:
                     # work first as the left of <= is positive class
                     classified_samples = np.where(x_train[:, feature] <= threshold, 1, -1)
-                    error = np.sum(weights[new_y_train != classified_samples])
+                    error = np.sum(weights[new_y_train != classified_samples]) # sum of weights of misclassified samples
                     if error < min_error:
                         min_error = error
                         stump.feature_col = feature
@@ -77,6 +77,7 @@ class AdaBoost:
         n_samples = x_test.shape[0]
         predicted_ys = np.zeros(n_samples)
 
+        # summing the predictions of each stump
         for stump in self.stumps:
             predicted_ys += stump.alpha * stump.predict(x_test)
 
